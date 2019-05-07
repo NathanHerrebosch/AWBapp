@@ -45,35 +45,19 @@ import static com.microsoft.windowsazure.mobileservices.table.query.QueryOperati
 
 public class MainActivity extends Activity {
 
-    /**
-     * Client reference
-     */
+    //Client reference
     private MobileServiceClient mDbClient;
 
-    /**
-     * Table used to access data from the mobile app backend.
-     */
-    //private MobileServiceTable<MowerDataItem> mToDoTable;
-
-    //Offline Sync
-    /**
-     * Table used to store data locally sync with the mobile app backend.
-     */
+    //Table used to store data locally sync with the mobile app backend.
     private MobileServiceSyncTable<MowerDataItem> mToDoTable;
 
-    /**
-     * Adapter to sync the items list with the view
-     */
+    // Adapter to sync the items list with the view
     private ToDoItemAdapter mAdapter;
 
-    /**
-     * EditText containing the "New To Do" text
-     */
+    //EditText containing the "New To Do" text
     private EditText mTextNewToDo;
 
-    /**
-     * Progress spinner to use for table operations
-     */
+    // Progress spinner to use for table operations
     private ProgressBar mProgressBar;
 
     /**
@@ -105,9 +89,6 @@ public class MainActivity extends Activity {
                     return client;
                 }
             });
-
-            // Get the remote table instance to use.
-            //mToDoTable = mDbClient.getTable(MowerDataItem.class);
 
             // Offline sync table instance.
             mToDoTable = mDbClient.getSyncTable("MowerDataItem", MowerDataItem.class);
@@ -155,9 +136,6 @@ public class MainActivity extends Activity {
 
     /**
      * Mark an item as completed
-     *
-     * @param item
-     *            The item to mark
      */
     public void checkItem(final MowerDataItem item) {
         if (mDbClient == null) {
@@ -195,19 +173,13 @@ public class MainActivity extends Activity {
 
     /**
      * Mark an item as completed in the Mobile Service Table
-     *
-     * @param item
-     *            The item to mark
      */
     public void checkItemInTable(MowerDataItem item) throws ExecutionException, InterruptedException {
         mToDoTable.update(item).get();
     }
 
     /**
-     * Add a new item
-     *
-     * @param view
-     *            The view that originated the call
+     * Add a new item to the table
      */
     public void addItem(View view) {
         if (mDbClient == null) {
@@ -219,8 +191,6 @@ public class MainActivity extends Activity {
 
         //parse the incoming data
         parseData(mTextNewToDo.getText().toString(), item);
-
-        item.setTimestamp(mTextNewToDo.getText().toString());
         item.setComplete(false);
 
         // Insert the new item
@@ -252,7 +222,7 @@ public class MainActivity extends Activity {
 
     /**
      *  the arduino sends the data in the format:
-     *  "data">dateTime>lat>lng>x>y>z>up>down>angel1>angle2>angle3>angle4>angle5>temp>ventilator
+     *  "data">timestamp>lat>lng>x>y>z>up>down>angel1>angle2>angle3>angle4>angle5>temp>ventilator
      *  this method splits the data and converts it to the correct format
      */
     private void parseData(String data, MowerDataItem item) {
@@ -260,8 +230,6 @@ public class MainActivity extends Activity {
         if(data.startsWith("data>")){
             try {
                 String[] splitData = data.split(">");
-                //DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"); // the format of the incoming date and time data
-                //item.setmDateTime(Date.valueOf(splitData[1]); // the first array element contains "data", so we start from index 1
                 item.setTimestamp(splitData[1]);
                 item.setmLat(Float.parseFloat(splitData[2]));
                 item.setmLng(Float.parseFloat(splitData[3]));
@@ -284,16 +252,13 @@ public class MainActivity extends Activity {
             }
 
         }
-        else{ //
+        else{ //if the incoming data is no mower data, we assume it is a message from the arduino to the driver and we print it on the screen
             createAndShowDialog(data, "Arduino: ");
         }
     }
 
     /**
      * Add an item to the Mobile Service Table
-     *
-     * @param item
-     *            The item to Add
      */
     public MowerDataItem addItemInTable(MowerDataItem item) throws ExecutionException, InterruptedException {
         MowerDataItem entity = mToDoTable.insert(item).get();
@@ -313,9 +278,7 @@ public class MainActivity extends Activity {
             protected Void doInBackground(Void... params) {
 
                 try {
-                    //final List<MowerDataItem> results = refreshItemsFromMobileServiceTable();
 
-                    //Offline Sync
                     final List<MowerDataItem> results = refreshItemsFromMobileServiceTableSyncTable();
 
                     runOnUiThread(new Runnable() {
@@ -339,16 +302,7 @@ public class MainActivity extends Activity {
         runAsyncTask(task);
     }
 
-    /**
-     * Refresh the list with the items in the Mobile Service Table
-     */
-/*
-    private List<MowerDataItem> refreshItemsFromMobileServiceTable() throws ExecutionException, InterruptedException {
-        return mToDoTable.where().field("complete").
-                eq(val(false)).execute().get();
-    }
-*/
-    //Offline Sync
+
     /**
      * Refresh the list with the items in the Mobile Service Sync Table
      */
@@ -362,10 +316,11 @@ public class MainActivity extends Activity {
 
     /**
      * Initialize local storage
-     * @return
      * @throws MobileServiceLocalStoreException
      * @throws ExecutionException
      * @throws InterruptedException
+     *
+     * the tableDefinition here has to have the exact same key-value pairs as the columns are defined in MowerDataItem.java
      */
     private AsyncTask<Void, Void, Void> initLocalStore() throws MobileServiceLocalStoreException, ExecutionException, InterruptedException {
 
@@ -417,12 +372,9 @@ public class MainActivity extends Activity {
         return runAsyncTask(task);
     }
 
-    //Offline Sync
     /**
      * Sync the current context and the Mobile Service Sync Table
-     * @return
      */
-
     private AsyncTask<Void, Void, Void> sync() {
         AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>(){
             @Override
@@ -442,12 +394,7 @@ public class MainActivity extends Activity {
 
 
     /**
-     * Creates a dialog and shows it
-     *
-     * @param exception
-     *            The exception to show in the dialog
-     * @param title
-     *            The dialog title
+     * Creates a new thread to create a dialog and show it
      */
     private void createAndShowDialogFromTask(final Exception exception, String title) {
         runOnUiThread(new Runnable() {
@@ -460,12 +407,7 @@ public class MainActivity extends Activity {
 
 
     /**
-     * Creates a dialog and shows it
-     *
-     * @param exception
-     *            The exception to show in the dialog
-     * @param title
-     *            The dialog title
+     * Creates a dialog from an exception and shows it
      */
     private void createAndShowDialog(Exception exception, String title) {
         Throwable ex = exception;
@@ -476,12 +418,7 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Creates a dialog and shows it
-     *
-     * @param message
-     *            The dialog message
-     * @param title
-     *            The dialog title
+     * Creates a dialog from a string and shows it
      */
     private void createAndShowDialog(final String message, final String title) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -493,8 +430,6 @@ public class MainActivity extends Activity {
 
     /**
      * Run an ASync task on the corresponding executor
-     * @param task
-     * @return
      */
     private AsyncTask<Void, Void, Void> runAsyncTask(AsyncTask<Void, Void, Void> task) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {

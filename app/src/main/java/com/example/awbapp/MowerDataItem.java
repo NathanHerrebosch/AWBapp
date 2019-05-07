@@ -5,21 +5,15 @@ package com.example.awbapp;
  */
 public class MowerDataItem {
 
-    /**
-     * Item timestamp
-     */
+    //Item timestamp
     @com.google.gson.annotations.SerializedName("timestamp")
     private String mTimestamp;
 
-    /**
-     * Item Id
-     */
+    //Item Id
     @com.google.gson.annotations.SerializedName("id")
     private String mId;
 
-    /**
-     * Indicates if the item is completed
-     */
+    //Indicates if the item is completed.
     @com.google.gson.annotations.SerializedName("complete")
     private boolean mComplete;
 
@@ -78,6 +72,10 @@ public class MowerDataItem {
     //the ventilator state (0 = off, 1 = cooling, 2 = cleaning)
     @com.google.gson.annotations.SerializedName("ventilator")
     private int ventilator;
+
+    /**
+     *  Here are the setters and getters of the fields defined above
+     */
 
     public String getTimestamp() {
         return mTimestamp;
@@ -215,18 +213,14 @@ public class MowerDataItem {
         this.ventilator = ventilator;
     }
 
+    //the constructor of the class
     public MowerDataItem() {
 
     }
 
     @Override
     public String toString() {
-        return getTimestamp();
-    }
-
-    public MowerDataItem(String timestamp, String id) {
-        this.setTimestamp(timestamp);
-        this.setId(id);
+        return getId() + " " + getTimestamp();
     }
 
     @Override
