@@ -56,8 +56,8 @@ public class ToDoItemAdapter extends ArrayAdapter<MowerDataItem> {
             public void onClick(View arg0) {
                 if (checkBox.isChecked()) {
                     checkBox.setEnabled(false);
-                    if (mContext instanceof ToDoActivity) {
-                        ToDoActivity activity = (ToDoActivity) mContext;
+                    if (mContext instanceof MainActivity) {
+                        MainActivity activity = (MainActivity) mContext;
                         activity.checkItem(currentItem);
                     }
                 }

@@ -43,7 +43,7 @@ import com.squareup.okhttp.OkHttpClient;
 
 import static com.microsoft.windowsazure.mobileservices.table.query.QueryOperations.*;
 
-public class ToDoActivity extends Activity {
+public class MainActivity extends Activity {
 
     /**
      * Client reference
@@ -217,6 +217,9 @@ public class ToDoActivity extends Activity {
         // Create a new item
         final MowerDataItem item = new MowerDataItem();
 
+        //parse the incoming data
+        parseData(mTextNewToDo.getText().toString(), item);
+
         item.setTimestamp(mTextNewToDo.getText().toString());
         item.setComplete(false);
 
@@ -245,6 +248,45 @@ public class ToDoActivity extends Activity {
         runAsyncTask(task);
 
         mTextNewToDo.setText("");
+    }
+
+    /**
+     *  the arduino sends the data in the format:
+     *  "data">dateTime>lat>lng>x>y>z>up>down>angel1>angle2>angle3>angle4>angle5>temp>ventilator
+     *  this method splits the data and converts it to the correct format
+     */
+    private void parseData(String data, MowerDataItem item) {
+
+        if(data.startsWith("data>")){
+            try {
+                String[] splitData = data.split(">");
+                //DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"); // the format of the incoming date and time data
+                //item.setmDateTime(Date.valueOf(splitData[1]); // the first array element contains "data", so we start from index 1
+                item.setTimestamp(splitData[1]);
+                item.setmLat(Float.parseFloat(splitData[2]));
+                item.setmLng(Float.parseFloat(splitData[3]));
+                item.setmXaxis(Float.parseFloat(splitData[4]));
+                item.setmYaxis(Float.parseFloat(splitData[5]));
+                item.setmZaxis(Float.parseFloat(splitData[6]));
+                item.setmUp("1".equals(splitData[7]));
+                item.setmDown("1".equals(splitData[8]));
+                item.setmAngle1(Float.parseFloat(splitData[9]));
+                item.setmAngle2(Float.parseFloat(splitData[10]));
+                item.setmAngle3(Float.parseFloat(splitData[11]));
+                item.setmAngle4(Float.parseFloat(splitData[12]));
+                item.setmAngle5(Float.parseFloat(splitData[13]));
+                item.setmTemperature(Float.parseFloat(splitData[14]));
+                item.setVentilator(Integer.parseInt(splitData[15]));
+            }catch(NumberFormatException e){
+                //when the data is not properly formatted, send it to the UI
+                createAndShowDialogFromTask(e, "Parsing error: \n" + data);
+                e.printStackTrace();
+            }
+
+        }
+        else{ //
+            createAndShowDialog(data, "Arduino: ");
+        }
     }
 
     /**
@@ -343,6 +385,20 @@ public class ToDoActivity extends Activity {
                     tableDefinition.put("id", ColumnDataType.String);
                     tableDefinition.put("timestamp", ColumnDataType.String);
                     tableDefinition.put("complete", ColumnDataType.Boolean);
+                    tableDefinition.put("lat", ColumnDataType.Real);
+                    tableDefinition.put("lng", ColumnDataType.Real);
+                    tableDefinition.put("x_axis", ColumnDataType.Real);
+                    tableDefinition.put("y_axis", ColumnDataType.Real);
+                    tableDefinition.put("z_axis", ColumnDataType.Real);
+                    tableDefinition.put("up", ColumnDataType.Boolean);
+                    tableDefinition.put("down", ColumnDataType.Boolean);
+                    tableDefinition.put("angle1", ColumnDataType.Real);
+                    tableDefinition.put("angle2", ColumnDataType.Real);
+                    tableDefinition.put("angle3", ColumnDataType.Real);
+                    tableDefinition.put("angle4", ColumnDataType.Real);
+                    tableDefinition.put("angle5", ColumnDataType.Real);
+                    tableDefinition.put("temperature", ColumnDataType.Real);
+                    tableDefinition.put("ventilator", ColumnDataType.Integer);
 
                     localStore.defineTable("MowerDataItem", tableDefinition);
 
