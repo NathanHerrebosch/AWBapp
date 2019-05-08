@@ -2,6 +2,7 @@ package com.example.awbapp;
 
 
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,6 @@ import com.microsoft.windowsazure.mobileservices.http.OkHttpClientFactory;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilter;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterRequest;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
-import com.microsoft.windowsazure.mobileservices.table.MobileServiceTable;
 import com.microsoft.windowsazure.mobileservices.table.query.Query;
 import com.microsoft.windowsazure.mobileservices.table.query.QueryOperations;
 import com.microsoft.windowsazure.mobileservices.table.sync.MobileServiceSyncContext;
@@ -45,17 +45,33 @@ import static com.microsoft.windowsazure.mobileservices.table.query.QueryOperati
 
 public class MainActivity extends Activity {
 
+    //Reference to the Listview
+    private ListView mList;
+
+    //An Arraylist to store the text to show
+    private ArrayList<String> arrayList;
+
+    //Adapter to sync the items list with the view
+    private ListAdapter mAdapter;
+
+    //reference to the TCP client
+    private TcpClient mTcpClient;
+
+    //The button to connect to the TCP socket
+    private MenuItem connectButton;
+
+    //The button to disconnect from the TCP socket
+    private MenuItem disconnectButton;
+
+
     //Client reference
     private MobileServiceClient mDbClient;
 
     //Table used to store data locally sync with the mobile app backend.
     private MobileServiceSyncTable<MowerDataItem> mToDoTable;
 
-    // Adapter to sync the items list with the view
-    private ToDoItemAdapter mAdapter;
-
     //EditText containing the "New To Do" text
-    private EditText mTextNewToDo;
+    private EditText editText;
 
     // Progress spinner to use for table operations
     private ProgressBar mProgressBar;
@@ -68,9 +84,17 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_to_do);
 
-        mProgressBar = (ProgressBar) findViewById(R.id.loadingProgressBar);
+        arrayList = new ArrayList<>();
+        editText = findViewById(R.id.editText);
+
+
+        //relate the listView from java to the one created in xml
+        mList = findViewById(R.id.list);
+        mAdapter = new ListAdapter(this, arrayList);
+        mList.setAdapter(mAdapter);
 
         // Initialize the progress bar
+        mProgressBar = (ProgressBar) findViewById(R.id.loadingProgressBar);
         mProgressBar.setVisibility(ProgressBar.GONE);
 
         try {
@@ -96,13 +120,6 @@ public class MainActivity extends Activity {
             //Init local storage
             initLocalStore().get();
 
-            mTextNewToDo = (EditText) findViewById(R.id.textNewToDo);
-
-            // Create an adapter to bind the items with the view
-            mAdapter = new ToDoItemAdapter(this, R.layout.row_list_to_do);
-            ListView listViewToDo = (ListView) findViewById(R.id.listViewToDo);
-            listViewToDo.setAdapter(mAdapter);
-
             // Load the items from the mobile app backend.
             refreshItemsFromTable();
 
@@ -119,6 +136,8 @@ public class MainActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_main, menu);
+        connectButton = menu.findItem(R.id.connect_button);
+        disconnectButton = menu.findItem(R.id.disconnect_button);
         return true;
     }
 
@@ -149,16 +168,7 @@ public class MainActivity extends Activity {
             @Override
             protected Void doInBackground(Void... params) {
                 try {
-
                     checkItemInTable(item);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (item.isComplete()) {
-                                mAdapter.remove(item);
-                            }
-                        }
-                    });
                 } catch (final Exception e) {
                     e.printStackTrace();
                 }
@@ -190,7 +200,8 @@ public class MainActivity extends Activity {
         final MowerDataItem item = new MowerDataItem();
 
         //parse the incoming data
-        parseData(mTextNewToDo.getText().toString(), item);
+        final String data = editText.getText().toString();
+        parseData(data, item);
         item.setComplete(false);
 
         // Insert the new item
@@ -199,15 +210,6 @@ public class MainActivity extends Activity {
             protected Void doInBackground(Void... params) {
                 try {
                     final MowerDataItem entity = addItemInTable(item);
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(!entity.isComplete()){
-                                mAdapter.add(entity);
-                            }
-                        }
-                    });
                 } catch (final Exception e) {
                     e.printStackTrace();
                 }
@@ -217,7 +219,7 @@ public class MainActivity extends Activity {
 
         runAsyncTask(task);
 
-        mTextNewToDo.setText("");
+        editText.setText("");
     }
 
     /**
@@ -253,8 +255,8 @@ public class MainActivity extends Activity {
 
         }
         else{ //if the incoming data is no mower data, we assume it is a message from the arduino to the driver and we print it on the screen
-            createAndShowDialog(data, "Arduino: ");
-        }
+            arrayList.add(data);
+            mAdapter.notifyDataSetChanged();        }
     }
 
     /**
@@ -279,16 +281,13 @@ public class MainActivity extends Activity {
 
                 try {
 
-                    final List<MowerDataItem> results = refreshItemsFromMobileServiceTableSyncTable();
+                    refreshItemsFromMobileServiceTableSyncTable();
 
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mAdapter.clear();
-
-                            for (MowerDataItem item : results) {
-                                mAdapter.add(item);
-                            }
+                            arrayList.clear();
+                            mAdapter.notifyDataSetChanged();
                         }
                     });
                 } catch (final Exception e){

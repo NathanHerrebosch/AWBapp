@@ -34,7 +34,7 @@
         android:padding="6dip"  >
 
         <EditText
-            android:id="@+id/textNewToDo"
+            android:id="@+id/editText"
             android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -43,6 +43,14 @@
 
             <requestFocus />
        </EditText>
+
+
+         <Button
+             android:id="@+id/send_button"
+             android:layout_width="64dip"
+             android:layout_height="wrap_content"
+             android:onClick="sendTcp"
+             android:text="@string/send_button_text" />
 
         <Button
             android:id="@+id/buttonAddToDo"
@@ -54,11 +62,12 @@
     </LinearLayout>
 
     <ListView
-        android:id="@+id/listViewToDo"
+        android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:listitem="@layout/row_list_to_do"
-        android:padding="6dip" >
+        android:padding="6dip"
+        android:transcriptMode="alwaysScroll"
+        android:listSelector="@android:color/transparent">
 
     </ListView>
 
