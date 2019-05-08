@@ -71,7 +71,7 @@ public class MowerDataItem {
 
     //the ventilator state (0 = off, 1 = cooling, 2 = cleaning)
     @com.google.gson.annotations.SerializedName("ventilator")
-    private int ventilator;
+    private String ventilator;
 
     /**
      *  Here are the setters and getters of the fields defined above
@@ -205,11 +205,11 @@ public class MowerDataItem {
         this.mTemperature = mTemperature;
     }
 
-    public int getVentilator() {
+    public String getVentilator() {
         return ventilator;
     }
 
-    public void setVentilator(int ventilator) {
+    public void setVentilator(String ventilator) {
         this.ventilator = ventilator;
     }
 

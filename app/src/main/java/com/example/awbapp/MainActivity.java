@@ -68,9 +68,9 @@ public class MainActivity extends Activity {
     private MobileServiceClient mDbClient;
 
     //Table used to store data locally sync with the mobile app backend.
-    private MobileServiceSyncTable<MowerDataItem> mToDoTable;
+    private MobileServiceSyncTable<MowerDataItem> mMowerTable;
 
-    //EditText containing the "New To Do" text
+    //EditText containing the "Add an item" text
     private EditText editText;
 
     // Progress spinner to use for table operations
@@ -115,7 +115,7 @@ public class MainActivity extends Activity {
             });
 
             // Offline sync table instance.
-            mToDoTable = mDbClient.getSyncTable("MowerDataItem", MowerDataItem.class);
+            mMowerTable = mDbClient.getSyncTable("MowerDataItem", MowerDataItem.class);
 
             //Init local storage
             initLocalStore().get();
@@ -149,8 +149,86 @@ public class MainActivity extends Activity {
         if (item.getItemId() == R.id.menu_refresh) {
             refreshItemsFromTable();
         }
-
+        if (item.getItemId() == R.id.connect_button) {
+            connect();
+        }
+        if (item.getItemId() == R.id.disconnect_button) {
+            disconnect();
+        }
         return true;
+    }
+
+    // this method is executed when the connect button is pressed
+    public void connect(){
+        new ConnectTask().execute();
+        connectButton.setEnabled(false);
+        disconnectButton.setEnabled(true);
+    }
+
+    //this method is executed when the disconnect button is pressed
+    public void disconnect(){
+        if (mTcpClient != null) {
+            arrayList.add("DISCONNECTED FROM SERVER!");
+            mAdapter.notifyDataSetChanged();
+            mTcpClient.stopClient();
+            mTcpClient = null;
+            disconnectButton.setEnabled(false);
+            connectButton.setEnabled(true);
+        }
+    }
+
+    // this method is executed when the sendTCP button is pressed
+    // it is used to send data from the android to the arduino
+    public void send(View view){
+        // if there is no connection yet, try to connect first
+        if(mTcpClient == null){
+            connect();
+        }
+
+        String message = editText.getText().toString();
+
+        //add the text in the arrayList
+        arrayList.add("An to Ar: " + message);
+
+        //sends the message to the server
+        if (mTcpClient != null) {
+            mTcpClient.SendMessage(message);
+        }
+        editText.setText("");
+        //refresh the list and update the UI
+        mAdapter.notifyDataSetChanged();
+    }
+
+    // connect to the TCP server
+    // this has to be an AsyncTask since the network can't be on the main thread
+    public class ConnectTask extends AsyncTask<String, String, TcpClient> {
+
+        @Override
+        protected TcpClient doInBackground(String... message) {
+
+            mTcpClient = new TcpClient(new TcpClient.OnMessageReceived() {
+                @Override
+                //here the messageReceived method is implemented
+                public void messageReceived(String message) {
+                    //this method calls the onProgressUpdate
+                    publishProgress(message);
+                }
+            });
+            mTcpClient.run();
+            return mTcpClient;
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            super.onProgressUpdate(values);
+
+            //in the arrayList we add the messaged received from server
+            arrayList.add(values[0]);
+            // notify the adapter that the data set has changed. This means that new message received
+            // from server was added to the list
+            mAdapter.notifyDataSetChanged();
+            addItem(values[0]);
+        }
     }
 
     /**
@@ -185,41 +263,56 @@ public class MainActivity extends Activity {
      * Mark an item as completed in the Mobile Service Table
      */
     public void checkItemInTable(MowerDataItem item) throws ExecutionException, InterruptedException {
-        mToDoTable.update(item).get();
+        mMowerTable.update(item).get();
     }
+
+    //Add the text in the editText to the database
+    public void addItem(View view){
+        addItem(editText.getText().toString());
+    }
+
 
     /**
      * Add a new item to the table
      */
-    public void addItem(View view) {
+    public void addItem(String data) {
         if (mDbClient == null) {
             return;
         }
 
-        // Create a new item
-        final MowerDataItem item = new MowerDataItem();
+        if(data.startsWith("data>")){ //all mower data the arduino sends starts with this tag
 
-        //parse the incoming data
-        final String data = editText.getText().toString();
-        parseData(data, item);
-        item.setComplete(false);
+            // Create a new item
+            final MowerDataItem item = new MowerDataItem();
 
-        // Insert the new item
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>(){
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    final MowerDataItem entity = addItemInTable(item);
-                } catch (final Exception e) {
-                    e.printStackTrace();
+            //parse the incoming data
+            parseData(data, item);
+
+            // Insert the new item
+            AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>(){
+                @Override
+                protected Void doInBackground(Void... params) {
+                    try {
+                        final MowerDataItem entity = addItemInTable(item);
+                    } catch (final Exception e) {
+                        e.printStackTrace();
+                    }
+                    return null;
                 }
-                return null;
+            };
+
+            runAsyncTask(task);
+
+            editText.setText("");
+
+        }
+        else{ //if the incoming data is no mower data,
+            // we assume it is a message from the arduino to the driver and we print it on the screen
+            if(!data.equals("")) {
+                arrayList.add("Ar to An: " + data);
+                mAdapter.notifyDataSetChanged();
             }
-        };
-
-        runAsyncTask(task);
-
-        editText.setText("");
+        }
     }
 
     /**
@@ -228,42 +321,37 @@ public class MainActivity extends Activity {
      *  this method splits the data and converts it to the correct format
      */
     private void parseData(String data, MowerDataItem item) {
+        try {
+            String[] splitData = data.split(">");
+            item.setTimestamp(splitData[1]);
+            item.setmLat(Float.parseFloat(splitData[2]));
+            item.setmLng(Float.parseFloat(splitData[3]));
+            item.setmXaxis(Float.parseFloat(splitData[4]));
+            item.setmYaxis(Float.parseFloat(splitData[5]));
+            item.setmZaxis(Float.parseFloat(splitData[6]));
+            item.setmUp("1".equals(splitData[7]));
+            item.setmDown("1".equals(splitData[8]));
+            item.setmAngle1(Float.parseFloat(splitData[9]));
+            item.setmAngle2(Float.parseFloat(splitData[10]));
+            item.setmAngle3(Float.parseFloat(splitData[11]));
+            item.setmAngle4(Float.parseFloat(splitData[12]));
+            item.setmAngle5(Float.parseFloat(splitData[13]));
+            item.setmTemperature(Float.parseFloat(splitData[14]));
+            item.setVentilator((splitData[15]));
+            item.setComplete(false);
 
-        if(data.startsWith("data>")){
-            try {
-                String[] splitData = data.split(">");
-                item.setTimestamp(splitData[1]);
-                item.setmLat(Float.parseFloat(splitData[2]));
-                item.setmLng(Float.parseFloat(splitData[3]));
-                item.setmXaxis(Float.parseFloat(splitData[4]));
-                item.setmYaxis(Float.parseFloat(splitData[5]));
-                item.setmZaxis(Float.parseFloat(splitData[6]));
-                item.setmUp("1".equals(splitData[7]));
-                item.setmDown("1".equals(splitData[8]));
-                item.setmAngle1(Float.parseFloat(splitData[9]));
-                item.setmAngle2(Float.parseFloat(splitData[10]));
-                item.setmAngle3(Float.parseFloat(splitData[11]));
-                item.setmAngle4(Float.parseFloat(splitData[12]));
-                item.setmAngle5(Float.parseFloat(splitData[13]));
-                item.setmTemperature(Float.parseFloat(splitData[14]));
-                item.setVentilator(Integer.parseInt(splitData[15]));
-            }catch(NumberFormatException e){
-                //when the data is not properly formatted, send it to the UI
-                createAndShowDialogFromTask(e, "Parsing error: \n" + data);
-                e.printStackTrace();
-            }
-
+        }catch(NumberFormatException e){
+            //when the data is not properly formatted, send the error to the UI
+            createAndShowDialogFromTask(e, "Parsing error: \n" + data);
+            e.printStackTrace();
         }
-        else{ //if the incoming data is no mower data, we assume it is a message from the arduino to the driver and we print it on the screen
-            arrayList.add(data);
-            mAdapter.notifyDataSetChanged();        }
     }
 
     /**
      * Add an item to the Mobile Service Table
      */
     public MowerDataItem addItemInTable(MowerDataItem item) throws ExecutionException, InterruptedException {
-        MowerDataItem entity = mToDoTable.insert(item).get();
+        MowerDataItem entity = mMowerTable.insert(item).get();
         return entity;
     }
 
@@ -310,7 +398,7 @@ public class MainActivity extends Activity {
         sync().get();
         Query query = QueryOperations.field("complete").
                 eq(val(false));
-        return mToDoTable.read(query).get();
+        return mMowerTable.read(query).get();
     }
 
     /**
@@ -352,7 +440,7 @@ public class MainActivity extends Activity {
                     tableDefinition.put("angle4", ColumnDataType.Real);
                     tableDefinition.put("angle5", ColumnDataType.Real);
                     tableDefinition.put("temperature", ColumnDataType.Real);
-                    tableDefinition.put("ventilator", ColumnDataType.Integer);
+                    tableDefinition.put("ventilator", ColumnDataType.String);
 
                     localStore.defineTable("MowerDataItem", tableDefinition);
 
@@ -381,7 +469,7 @@ public class MainActivity extends Activity {
                 try {
                     MobileServiceSyncContext syncContext = mDbClient.getSyncContext();
                     syncContext.push().get();
-                    mToDoTable.pull(null).get();
+                    mMowerTable.pull(null).get();
                 } catch (final Exception e) {
                     e.printStackTrace();
                 }
