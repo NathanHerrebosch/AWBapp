@@ -126,7 +126,7 @@ public class MainActivity extends Activity {
         } catch (MalformedURLException e) {
             createAndShowDialog(new Exception("There was an error creating the Mobile Service. Verify the URL"), "Error");
         } catch (Exception e){
-            createAndShowDialog(e, "Error");
+            createAndShowDialog(e, "Error while creating the Mobile Service");
         }
     }
 
@@ -168,7 +168,7 @@ public class MainActivity extends Activity {
     //this method is executed when the disconnect button is pressed
     public void disconnect(){
         if (mTcpClient != null) {
-            arrayList.add("DISCONNECTED FROM SERVER!");
+            arrayList.add("DISCONNECTED FROM TCP SERVER!");
             mAdapter.notifyDataSetChanged();
             mTcpClient.stopClient();
             mTcpClient = null;
@@ -179,7 +179,7 @@ public class MainActivity extends Activity {
 
     // this method is executed when the sendTCP button is pressed
     // it is used to send data from the android to the arduino
-    public void send(View view){
+    public void sendTcp(View view){
         // if there is no connection yet, try to connect first
         if(mTcpClient == null){
             connect();
@@ -192,7 +192,7 @@ public class MainActivity extends Activity {
 
         //sends the message to the server
         if (mTcpClient != null) {
-            mTcpClient.SendMessage(message);
+            mTcpClient.sendMessage(message);
         }
         editText.setText("");
         //refresh the list and update the UI
@@ -227,6 +227,7 @@ public class MainActivity extends Activity {
             // notify the adapter that the data set has changed. This means that new message received
             // from server was added to the list
             mAdapter.notifyDataSetChanged();
+            //add the incoming data to the database
             addItem(values[0]);
         }
     }
@@ -280,8 +281,12 @@ public class MainActivity extends Activity {
             return;
         }
 
-        if(data.startsWith("data>")){ //all mower data the arduino sends starts with this tag
+        if(data.startsWith("fault>")) { //warning and error messages start with this tag
+            // the message is printed on the User Interface
+            createAndShowDialog(data, "Arduino: ");
+        }
 
+        else{// if the incoming data is not an error messgage, we assume it is sensor data and we send it to the database
             // Create a new item
             final MowerDataItem item = new MowerDataItem();
 
@@ -304,46 +309,47 @@ public class MainActivity extends Activity {
             runAsyncTask(task);
 
             editText.setText("");
-
-        }
-        else{ //if the incoming data is no mower data,
-            // we assume it is a message from the arduino to the driver and we print it on the screen
-            if(!data.equals("")) {
-                arrayList.add("Ar to An: " + data);
-                mAdapter.notifyDataSetChanged();
-            }
         }
     }
 
     /**
      *  the arduino sends the data in the format:
-     *  "data">timestamp>lat>lng>x>y>z>up>down>angel1>angle2>angle3>angle4>angle5>temp>ventilator
+     *  timestamp>lat>lng>x>y>z>up>down>angel1>angle2>angle3>angle4>angle5>temp>ventilator
      *  this method splits the data and converts it to the correct format
      */
     private void parseData(String data, MowerDataItem item) {
-        try {
-            String[] splitData = data.split(">");
-            item.setTimestamp(splitData[1]);
-            item.setmLat(Float.parseFloat(splitData[2]));
-            item.setmLng(Float.parseFloat(splitData[3]));
-            item.setmXaxis(Float.parseFloat(splitData[4]));
-            item.setmYaxis(Float.parseFloat(splitData[5]));
-            item.setmZaxis(Float.parseFloat(splitData[6]));
-            item.setmUp("1".equals(splitData[7]));
-            item.setmDown("1".equals(splitData[8]));
-            item.setmAngle1(Float.parseFloat(splitData[9]));
-            item.setmAngle2(Float.parseFloat(splitData[10]));
-            item.setmAngle3(Float.parseFloat(splitData[11]));
-            item.setmAngle4(Float.parseFloat(splitData[12]));
-            item.setmAngle5(Float.parseFloat(splitData[13]));
-            item.setmTemperature(Float.parseFloat(splitData[14]));
-            item.setVentilator((splitData[15]));
-            item.setComplete(false);
+        if(!data.equals("")) {
+            try {
+                String[] splitData = data.split(">");
+                if (splitData.length >= 16) {
+                    item.setTimestamp(splitData[1]);
+                    item.setmLat(Float.parseFloat(splitData[2]));
+                    item.setmLng(Float.parseFloat(splitData[3]));
+                    item.setmXaxis(Float.parseFloat(splitData[4]));
+                    item.setmYaxis(Float.parseFloat(splitData[5]));
+                    item.setmZaxis(Float.parseFloat(splitData[6]));
+                    item.setmUp("1".equals(splitData[7]));
+                    item.setmDown("1".equals(splitData[8]));
+                    item.setmAngle1(Float.parseFloat(splitData[9]));
+                    item.setmAngle2(Float.parseFloat(splitData[10]));
+                    item.setmAngle3(Float.parseFloat(splitData[11]));
+                    item.setmAngle4(Float.parseFloat(splitData[12]));
+                    item.setmAngle5(Float.parseFloat(splitData[13]));
+                    item.setmTemperature(Float.parseFloat(splitData[14]));
+                    item.setVentilator((splitData[15]));
+                    item.setComplete(false);
+                } else {
+                    //when the data is not properly formatted, it is probably not sensor data
+                    //send the incoming data to the UI
+                    createAndShowDialog(data, "Arduino : \n");
+                }
 
-        }catch(NumberFormatException e){
-            //when the data is not properly formatted, send the error to the UI
-            createAndShowDialogFromTask(e, "Parsing error: \n" + data);
-            e.printStackTrace();
+            } catch (NumberFormatException e) {
+                //when the data is not properly formatted, it is probably not sensor data
+                //send the incoming data to the UI
+                createAndShowDialog(data, "Arduino : \n");
+                e.printStackTrace();
+            }
         }
     }
 

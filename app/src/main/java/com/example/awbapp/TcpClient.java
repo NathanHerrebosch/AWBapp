@@ -39,7 +39,7 @@ class TcpClient {
     public void stopClient() {
 
         // send message that we are closing the connection
-        SendMessage("Connection Closed by client");
+        sendMessage("Connection Closed by client");
 
         mRun = false;
 
@@ -54,7 +54,7 @@ class TcpClient {
         mServerMessage = null;
     }
 
-    public void SendMessage(String message) {
+    public void sendMessage(String message) {
         messageOut = message;
         SendThread st = new SendThread();
         st.start();
@@ -83,7 +83,7 @@ class TcpClient {
 
             //receives the message which the server sends back
             mBufferIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            SendMessage("Client AWB connected");
+            sendMessage("Client AWB connected");
             //in this while the client listens for the messages sent by the server
             while (mRun) {
 
