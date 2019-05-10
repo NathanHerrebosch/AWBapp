@@ -221,12 +221,6 @@ public class MainActivity extends Activity {
         @Override
         protected void onProgressUpdate(String... values) {
             super.onProgressUpdate(values);
-
-            //in the arrayList we add the messaged received from server
-            arrayList.add(values[0]);
-            // notify the adapter that the data set has changed. This means that new message received
-            // from server was added to the list
-            mAdapter.notifyDataSetChanged();
             //add the incoming data to the database
             addItem(values[0]);
         }
@@ -289,25 +283,26 @@ public class MainActivity extends Activity {
         else{// if the incoming data is not an error messgage, we assume it is sensor data and we send it to the database
             // Create a new item
             final MowerDataItem item = new MowerDataItem();
-
+            item.setComplete(false);
             //parse the incoming data
             parseData(data, item);
-
-            // Insert the new item
-            AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>(){
-                @Override
-                protected Void doInBackground(Void... params) {
-                    try {
-                        final MowerDataItem entity = addItemInTable(item);
-                    } catch (final Exception e) {
-                        e.printStackTrace();
+            //if complete is set, the data is succesfully parsed and we can send it to the DB
+            if(item.isComplete()) {
+                // Insert the new item
+                AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                        try {
+                            final MowerDataItem entity = addItemInTable(item);
+                        } catch (final Exception e) {
+                            e.printStackTrace();
+                        }
+                        return null;
                     }
-                    return null;
-                }
-            };
+                };
 
-            runAsyncTask(task);
-
+                runAsyncTask(task);
+            }
             editText.setText("");
         }
     }
@@ -321,29 +316,24 @@ public class MainActivity extends Activity {
         if(!data.equals("")) {
             try {
                 String[] splitData = data.split(">");
-                if (splitData.length >= 16) {
-                    item.setTimestamp(splitData[1]);
-                    item.setmLat(Float.parseFloat(splitData[2]));
-                    item.setmLng(Float.parseFloat(splitData[3]));
-                    item.setmXaxis(Float.parseFloat(splitData[4]));
-                    item.setmYaxis(Float.parseFloat(splitData[5]));
-                    item.setmZaxis(Float.parseFloat(splitData[6]));
-                    item.setmUp("1".equals(splitData[7]));
-                    item.setmDown("1".equals(splitData[8]));
-                    item.setmAngle1(Float.parseFloat(splitData[9]));
-                    item.setmAngle2(Float.parseFloat(splitData[10]));
-                    item.setmAngle3(Float.parseFloat(splitData[11]));
-                    item.setmAngle4(Float.parseFloat(splitData[12]));
-                    item.setmAngle5(Float.parseFloat(splitData[13]));
-                    item.setmTemperature(Float.parseFloat(splitData[14]));
-                    item.setVentilator((splitData[15]));
-                    item.setComplete(false);
-                } else {
-                    //when the data is not properly formatted, it is probably not sensor data
-                    //send the incoming data to the UI
-                    createAndShowDialog(data, "Arduino : \n");
+                if(splitData.length>=15 && splitData.length<=20) {
+                    item.setTimestamp(splitData[0]);
+                    item.setmLat(Float.parseFloat(splitData[1]));
+                    item.setmLng(Float.parseFloat(splitData[2]));
+                    item.setmXaxis(Float.parseFloat(splitData[3]));
+                    item.setmYaxis(Float.parseFloat(splitData[4]));
+                    item.setmZaxis(Float.parseFloat(splitData[5]));
+                    item.setmUp("1".equals(splitData[6]));
+                    item.setmDown("1".equals(splitData[7]));
+                    item.setmAngle1(Float.parseFloat(splitData[8]));
+                    item.setmAngle2(Float.parseFloat(splitData[9]));
+                    item.setmAngle3(Float.parseFloat(splitData[10]));
+                    item.setmAngle4(Float.parseFloat(splitData[11]));
+                    item.setmAngle5(Float.parseFloat(splitData[12]));
+                    item.setmTemperature(Float.parseFloat(splitData[13]));
+                    item.setVentilator((splitData[14]));
+                    item.setComplete(true);
                 }
-
             } catch (NumberFormatException e) {
                 //when the data is not properly formatted, it is probably not sensor data
                 //send the incoming data to the UI
@@ -403,7 +393,7 @@ public class MainActivity extends Activity {
         //sync the data
         sync().get();
         Query query = QueryOperations.field("complete").
-                eq(val(false));
+                eq(val(true));
         return mMowerTable.read(query).get();
     }
 
