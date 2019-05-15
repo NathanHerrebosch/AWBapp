@@ -166,7 +166,7 @@ public class MainActivity extends Activity {
         connectButton.setEnabled(false);
     }
 
-    //this method is executed when the data is pushed to the database
+    //this method is used to disconnect from the tcp server
     public void disconnect(){
         if (mTcpClient != null) {
             arrayList.add("Disconnected from TCP server!");
@@ -202,41 +202,6 @@ public class MainActivity extends Activity {
             //add the incoming data to the database
             addItem(values[0]);
         }
-    }
-
-    /**
-     * Mark an item as completed
-     */
-    public void checkItem(final MowerDataItem item) {
-        if (mDbClient == null) {
-            return;
-        }
-
-        // Set the item as completed and update it in the table
-        item.setComplete(true);
-
-        AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>(){
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    checkItemInTable(item);
-                } catch (final Exception e) {
-                    e.printStackTrace();
-                }
-
-                return null;
-            }
-        };
-
-        runAsyncTask(task);
-
-    }
-
-    /**
-     * Mark an item as completed in the Mobile Service Table
-     */
-    public void checkItemInTable(MowerDataItem item) throws ExecutionException, InterruptedException {
-        mMowerTable.update(item).get();
     }
 
     /**
@@ -453,20 +418,6 @@ public class MainActivity extends Activity {
         };
         return runAsyncTask(task);
     }
-
-
-    /**
-     * Creates a new thread to create a dialog and show it
-     */
-    private void createAndShowDialogFromTask(final Exception exception, String title) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                createAndShowDialog(exception, "Error");
-            }
-        });
-    }
-
 
     /**
      * Creates a dialog from an exception and shows it

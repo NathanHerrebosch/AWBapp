@@ -92,7 +92,7 @@ class TcpClient {
                 if (mServerMessage != null && mMessageListener != null) {
                     //call the method messageReceived from MyActivity class
                     mMessageListener.messageReceived(mServerMessage);
-                    Log.e("RESPONSE FROM SERVER", "S: Received Message: '" + mServerMessage + "'");
+                    Log.e("RESPONSE FROM SERVER", "Received Message: '" + mServerMessage + "'");
 
                 }
             }
