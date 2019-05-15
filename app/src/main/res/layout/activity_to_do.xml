@@ -1,5 +1,4 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/LinearLayout1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -32,32 +31,6 @@
         android:layout_height="wrap_content"
         android:background="#71BCFA"
         android:padding="6dip"  >
-
-        <EditText
-            android:id="@+id/editText"
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:hint="@string/add_textbox_hint" >
-
-            <requestFocus />
-       </EditText>
-
-
-         <Button
-             android:id="@+id/send_button"
-             android:layout_width="64dip"
-             android:layout_height="wrap_content"
-             android:onClick="sendTcp"
-             android:text="@string/send_button_text" />
-
-        <Button
-            android:id="@+id/buttonAddToDo"
-            android:layout_width="64dip"
-            android:layout_height="wrap_content"
-            android:onClick="addItem"
-            android:text="@string/add_button_text" />
 
     </LinearLayout>
 

@@ -14,6 +14,7 @@ import android.app.AlertDialog;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Html;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -70,11 +71,15 @@ public class MainActivity extends Activity {
     //Table used to store data locally sync with the mobile app backend.
     private MobileServiceSyncTable<MowerDataItem> mMowerTable;
 
-    //EditText containing the "Add an item" text
-    private EditText editText;
-
     // Progress spinner to use for table operations
     private ProgressBar mProgressBar;
+
+    //The text displayed on the UI to inform the user how to setup a TCP connection with the arduino
+    private final String startText = "TO START:\nMake sure you are connected to the arduino_server wifi network.\nClick the 'Connect TCP button' of the menu in the top right corner.";
+
+    //The text displayed on the UI to inform the user how to push data to the Azure database
+    private final String endText = "TO FINISH:\nMake sure you are connected to the internet.\nClick the 'Push to DB' button of the menu in the top right corner.";
+
 
     /**
      * Initializes the activity
@@ -85,8 +90,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_to_do);
 
         arrayList = new ArrayList<>();
-        editText = findViewById(R.id.editText);
-
 
         //relate the listView from java to the one created in xml
         mList = findViewById(R.id.list);
@@ -128,6 +131,10 @@ public class MainActivity extends Activity {
         } catch (Exception e){
             createAndShowDialog(e, "Error while creating the Mobile Service");
         }
+
+        arrayList.add(Html.fromHtml(startText).toString());
+        arrayList.add(Html.fromHtml(endText).toString());
+        mAdapter.notifyDataSetChanged();
     }
 
     /**
@@ -175,28 +182,6 @@ public class MainActivity extends Activity {
             disconnectButton.setEnabled(false);
             connectButton.setEnabled(true);
         }
-    }
-
-    // this method is executed when the sendTCP button is pressed
-    // it is used to send data from the android to the arduino
-    public void sendTcp(View view){
-        // if there is no connection yet, try to connect first
-        if(mTcpClient == null){
-            connect();
-        }
-
-        String message = editText.getText().toString();
-
-        //add the text in the arrayList
-        arrayList.add("An to Ar: " + message);
-
-        //sends the message to the server
-        if (mTcpClient != null) {
-            mTcpClient.sendMessage(message);
-        }
-        editText.setText("");
-        //refresh the list and update the UI
-        mAdapter.notifyDataSetChanged();
     }
 
     // connect to the TCP server
@@ -261,12 +246,6 @@ public class MainActivity extends Activity {
         mMowerTable.update(item).get();
     }
 
-    //Add the text in the editText to the database
-    public void addItem(View view){
-        addItem(editText.getText().toString());
-    }
-
-
     /**
      * Add a new item to the table
      */
@@ -281,11 +260,14 @@ public class MainActivity extends Activity {
         }
 
         else{// if the incoming data is not an error messgage, we assume it is sensor data and we send it to the database
+
             // Create a new item
             final MowerDataItem item = new MowerDataItem();
             item.setComplete(false);
+
             //parse the incoming data
             parseData(data, item);
+
             //if complete is set, the data is succesfully parsed and we can send it to the DB
             if(item.isComplete()) {
                 // Insert the new item
@@ -303,7 +285,6 @@ public class MainActivity extends Activity {
 
                 runAsyncTask(task);
             }
-            editText.setText("");
         }
     }
 
@@ -371,6 +352,8 @@ public class MainActivity extends Activity {
                         @Override
                         public void run() {
                             arrayList.clear();
+                            arrayList.add(startText);
+                            arrayList.add(endText);
                             mAdapter.notifyDataSetChanged();
                         }
                     });

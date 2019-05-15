@@ -1,13 +1,9 @@
 <resources>
 
     <string name="app_name">AWBapp</string>
-    <string name="add_textbox_hint">Add an item</string>
-    <string name="add_button_text">Add DB</string>
-    <string name="send_button_text">Send TCP</string>
-    <string name="service_title">Mobile Apps </string>
+    <string name="service_title">AWB Schots Mobile Application </string>
     <string name="menu_refresh">Push To DB</string>
     <string name="menu_connect">Connect TCP</string>
     <string name="menu_disconnect">Disconnect TCP</string>
-    <string name="checkbox_text">Item Text</string>
 
 </resources>

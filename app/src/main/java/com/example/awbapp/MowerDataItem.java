@@ -13,7 +13,7 @@ public class MowerDataItem {
     @com.google.gson.annotations.SerializedName("id")
     private String mId;
 
-    //Indicates if the item is completed.
+    //Indicates if all item fields have been set and the item is complete
     @com.google.gson.annotations.SerializedName("complete")
     private boolean mComplete;
 
