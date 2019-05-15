@@ -61,9 +61,6 @@ public class MainActivity extends Activity {
     //The button to connect to the TCP socket
     private MenuItem connectButton;
 
-    //The button to disconnect from the TCP socket
-    private MenuItem disconnectButton;
-
 
     //Client reference
     private MobileServiceClient mDbClient;
@@ -144,7 +141,6 @@ public class MainActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_main, menu);
         connectButton = menu.findItem(R.id.connect_button);
-        disconnectButton = menu.findItem(R.id.disconnect_button);
         return true;
     }
 
@@ -159,27 +155,24 @@ public class MainActivity extends Activity {
         if (item.getItemId() == R.id.connect_button) {
             connect();
         }
-        if (item.getItemId() == R.id.disconnect_button) {
-            disconnect();
-        }
         return true;
     }
 
     // this method is executed when the connect button is pressed
     public void connect(){
         new ConnectTask().execute();
+        arrayList.add("TCP connection started");
+        mAdapter.notifyDataSetChanged();
         connectButton.setEnabled(false);
-        disconnectButton.setEnabled(true);
     }
 
-    //this method is executed when the disconnect button is pressed
+    //this method is executed when the data is pushed to the database
     public void disconnect(){
         if (mTcpClient != null) {
-            arrayList.add("DISCONNECTED FROM TCP SERVER!");
+            arrayList.add("Disconnected from TCP server!");
             mAdapter.notifyDataSetChanged();
             mTcpClient.stopClient();
             mTcpClient = null;
-            disconnectButton.setEnabled(false);
             connectButton.setEnabled(true);
         }
     }
@@ -336,6 +329,9 @@ public class MainActivity extends Activity {
      * Refresh the list with the items in the Table
      */
     private void refreshItemsFromTable() {
+
+        //We disconnect from the android server because we can't possibly be connected to both the arduino and azure
+        disconnect();
 
         // Get the items that weren't marked as completed and add them in the
         // adapter

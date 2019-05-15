@@ -4,6 +4,5 @@
     <string name="service_title">AWB Schots Mobile Application </string>
     <string name="menu_refresh">Push To DB</string>
     <string name="menu_connect">Connect TCP</string>
-    <string name="menu_disconnect">Disconnect TCP</string>
 
 </resources>
