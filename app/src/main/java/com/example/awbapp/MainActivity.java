@@ -129,8 +129,8 @@ public class MainActivity extends Activity {
             createAndShowDialog(e, "Error while creating the Mobile Service");
         }
 
-        arrayList.add(Html.fromHtml(startText).toString());
-        arrayList.add(Html.fromHtml(endText).toString());
+        arrayList.add(startText);
+        arrayList.add(endText);
         mAdapter.notifyDataSetChanged();
     }
 
@@ -296,6 +296,7 @@ public class MainActivity extends Activity {
     private void refreshItemsFromTable() {
 
         //We disconnect from the android server because we can't possibly be connected to both the arduino and azure
+        //This is also useful if we want to deliberately disconnect from the arduino
         disconnect();
 
         // Get the items that weren't marked as completed and add them in the

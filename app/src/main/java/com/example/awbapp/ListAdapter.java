@@ -23,8 +23,8 @@ public class ListAdapter extends BaseAdapter {
     }
 
     @Override
+    //getCount() represents how many items are in the list
     public int getCount() {
-        //getCount() represents how many items are in the list
         return mListItems.size();
     }
 
