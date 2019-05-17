@@ -73,6 +73,10 @@ public class MowerDataItem {
     @com.google.gson.annotations.SerializedName("ventilator")
     private String ventilator;
 
+    //Mower Id
+    @com.google.gson.annotations.SerializedName("mowerId")
+    private int mowerId;
+
     /**
      *  Here are the setters and getters of the fields defined above
      */
@@ -211,6 +215,14 @@ public class MowerDataItem {
 
     public void setVentilator(String ventilator) {
         this.ventilator = ventilator;
+    }
+
+    public int getMowerId() {
+        return mowerId;
+    }
+
+    public final void setMowerId(int id) {
+        mowerId = id;
     }
 
     //the constructor of the class

@@ -248,29 +248,30 @@ public class MainActivity extends Activity {
 
     /**
      *  the arduino sends the data in the format:
-     *  timestamp>lat>lng>x>y>z>up>down>angel1>angle2>angle3>angle4>angle5>temp>ventilator
+     *  mowerId>timestamp>lat>lng>x>y>z>up>down>angel1>angle2>angle3>angle4>angle5>temp>ventilator
      *  this method splits the data and converts it to the correct format
      */
     private void parseData(String data, MowerDataItem item) {
         if(!data.equals("")) {
             try {
                 String[] splitData = data.split(">");
-                if(splitData.length>=15 && splitData.length<=20) {
-                    item.setTimestamp(splitData[0]);
-                    item.setmLat(Float.parseFloat(splitData[1]));
-                    item.setmLng(Float.parseFloat(splitData[2]));
-                    item.setmXaxis(Float.parseFloat(splitData[3]));
-                    item.setmYaxis(Float.parseFloat(splitData[4]));
-                    item.setmZaxis(Float.parseFloat(splitData[5]));
-                    item.setmUp("1".equals(splitData[6]));
-                    item.setmDown("1".equals(splitData[7]));
-                    item.setmAngle1(Float.parseFloat(splitData[8]));
-                    item.setmAngle2(Float.parseFloat(splitData[9]));
-                    item.setmAngle3(Float.parseFloat(splitData[10]));
-                    item.setmAngle4(Float.parseFloat(splitData[11]));
-                    item.setmAngle5(Float.parseFloat(splitData[12]));
-                    item.setmTemperature(Float.parseFloat(splitData[13]));
-                    item.setVentilator((splitData[14]));
+                if(splitData.length>=16 && splitData.length<=20) {
+                    item.setMowerId(Integer.parseInt(splitData[0]));
+                    item.setTimestamp(splitData[1]);
+                    item.setmLat(Float.parseFloat(splitData[2]));
+                    item.setmLng(Float.parseFloat(splitData[3]));
+                    item.setmXaxis(Float.parseFloat(splitData[4]));
+                    item.setmYaxis(Float.parseFloat(splitData[5]));
+                    item.setmZaxis(Float.parseFloat(splitData[6]));
+                    item.setmUp("1".equals(splitData[7]));
+                    item.setmDown("1".equals(splitData[8]));
+                    item.setmAngle1(Float.parseFloat(splitData[9]));
+                    item.setmAngle2(Float.parseFloat(splitData[10]));
+                    item.setmAngle3(Float.parseFloat(splitData[11]));
+                    item.setmAngle4(Float.parseFloat(splitData[12]));
+                    item.setmAngle5(Float.parseFloat(splitData[13]));
+                    item.setmTemperature(Float.parseFloat(splitData[14]));
+                    item.setVentilator((splitData[15]));
                     item.setComplete(true);
                 }
             } catch (NumberFormatException e) {
@@ -382,6 +383,7 @@ public class MainActivity extends Activity {
                     tableDefinition.put("angle5", ColumnDataType.Real);
                     tableDefinition.put("temperature", ColumnDataType.Real);
                     tableDefinition.put("ventilator", ColumnDataType.String);
+                    tableDefinition.put("mowerId", ColumnDataType.Integer);
 
                     localStore.defineTable("MowerDataItem", tableDefinition);
 
