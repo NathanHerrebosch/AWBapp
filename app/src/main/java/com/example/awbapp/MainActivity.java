@@ -214,7 +214,7 @@ public class MainActivity extends Activity {
 
         if(data.startsWith("fault>")) { //warning and error messages start with this tag
             // the message is printed on the User Interface
-            createAndShowDialog(data, "Arduino: ");
+            createAndShowDialog("Motor fault, check the ventilator!", "Arduino: ");
         }
 
         else{// if the incoming data is not an error messgage, we assume it is sensor data and we send it to the database
